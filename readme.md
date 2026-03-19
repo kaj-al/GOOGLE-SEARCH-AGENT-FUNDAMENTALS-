@@ -15,7 +15,7 @@ The file demonstrates all of the initial and basics of AI Agents integrated with
 from dotenv import load_dotenv
 load_dotenv()
 ```
-### Integrate with agent
+### Integrate with agent (without memory)
 ```python
 model = ChatGroq(model="openai/gpt-oss-20b")
 search = GoogleSerperAPIWrapper()
@@ -26,6 +26,23 @@ while True:
         break
 reply = agent.invoke({"messages":[{"role":"user","content":query}]})
 reply["messages"][-1].content
+```
+### with memory
+```python
+model = ChatGroq(model="openai/gpt-oss-20b")
+search = GoogleSerperAPIWrapper()
+tools = search.run
+checkpointer = InMemorySaver()
+
+agent = create_agent(model=model,tools=[tools],checkpointer=checkpointer,system_prompt="You are an expert agent and search answers for any questions on Google.")
+
+while True:
+    query = input("user: ")
+    if query.lower() == ["quit","bye"]:
+        break
+    response = agent.invoke({"messages":[{"role":"user","content":query}]},
+                        {"configurable":{"thread_id":"moon"}})
+    print(response["messages"][-1].content)
 ```
 
 ## Setup
