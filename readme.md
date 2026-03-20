@@ -15,26 +15,37 @@ The file demonstrates all of the initial and basics of AI Agents integrated with
 from dotenv import load_dotenv
 load_dotenv()
 ```
-### Integrate with agent (without memory)
-```python
-model = ChatGroq(model="openai/gpt-oss-20b")
-search = GoogleSerperAPIWrapper()
-agent = create_agent(model=model,tools=[search.run],system_prompt="You are an expert agent and search answers for any questions on Google.")
-while True:
-    query = input("user: ")
-    if query.lower() == ["quit","bye"]:
-        break
-reply = agent.invoke({"messages":[{"role":"user","content":query}]})
-reply["messages"][-1].content
-```
-### with memory
+### Integrate with agent 
 ```python
 model = ChatGroq(model="openai/gpt-oss-20b")
 search = GoogleSerperAPIWrapper()
 tools = search.run
-checkpointer = InMemorySaver()
 
-agent = create_agent(model=model,tools=[tools],checkpointer=checkpointer,system_prompt="You are an expert agent and search answers for any questions on Google.")
+if "memory" not in st.session_state:
+    st.session_state.memory = InMemorySaver()
+    st.session_state.history = []
+
+agent = create_agent(model=model,tools=[tools],checkpointer=st.session_state.memory,system_prompt="You are an expert agent and search answers for any questions on Google.")
+```
+### chat part with ui
+```python
+st.header('AI SMASH')
+
+for message in st.session_state.history:
+    role = message["role"]
+    content = message["content"]
+    st.chat_message(role).markdown(content)
+
+query = st.chat_input("Ask Anything !")
+if query:
+    st.chat_message("user").markdown(query)  
+    st.session_state.history.append({"role":"user","content":query})
+    response = agent.invoke({"messages":[{"role":"user","content":query}]},
+                        {"configurable":{"thread_id":"moon"}})
+    answer = response["messages"][-1].content
+    st.chat_message("ai").markdown(answer)  
+    st.session_state.history.append({"role":"ai","content":answer})
+```
 
 while True:
     query = input("user: ")
