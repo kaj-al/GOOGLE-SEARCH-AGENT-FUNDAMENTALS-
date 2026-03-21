@@ -47,13 +47,23 @@ if query:
     st.session_state.history.append({"role":"ai","content":answer})
 ```
 
-while True:
-    query = input("user: ")
-    if query.lower() == ["quit","bye"]:
-        break
-    response = agent.invoke({"messages":[{"role":"user","content":query}]},
-                        {"configurable":{"thread_id":"moon"}})
-    print(response["messages"][-1].content)
+### with streaming(typing effect)
+```python
+query = st.chat_input("Ask Anything !")
+if query:
+    st.chat_message("user").markdown(query)  
+    st.session_state.history.append({"role":"user","content":query})
+    response = agent.stream({"messages":[{"role":"user","content":query}]},
+                        {"configurable":{"thread_id":"moon"}},
+                        stream_mode="messages")
+    ai = st.chat_message("ai")
+    with ai:
+        space = st.empty()
+        msg = ""
+        for chunk in response:
+            msg = msg + chunk[0].content 
+            space.write(msg)
+        st.session_state.history.append({"role":"ai","content":msg})
 ```
 
 ## Setup
